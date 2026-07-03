@@ -55,8 +55,8 @@ impl Plugin for DelayVst {
             self.params.editor_state.clone(),
             (),
             |_, _| {},
-            // Updated for nih-plug's new 3-argument closure
-            move |_, ctx, _setter| {
+            // FIXED: The context is the first argument, not the second!
+            move |ctx, _setter, _state| {
                 app_state.update(ctx);
             },
         )
@@ -73,7 +73,14 @@ impl Plugin for DelayVst {
     }
 }
 
-// Fixed: Removed the accidental 'impl' keyword here
+// FIXED: Added the required Vst3Plugin implementation block
+impl Vst3Plugin for DelayVst {
+    // The ID must be exactly 16 characters long
+    const VST3_CLASS_ID: [u8; 16] = *b"Tayo6DelayReplca"; 
+    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] =
+        &[Vst3SubCategory::Fx, Vst3SubCategory::Delay];
+}
+
 nih_plug::nih_export_vst3!(DelayVst);
 
 // ==========================================================================
@@ -146,7 +153,6 @@ impl DelayVstApp {
         }
 
         egui::CentralPanel::default()
-            // Updated to Frame::NONE for egui 0.31
             .frame(egui::Frame::NONE.fill(egui::Color32::from_rgb(18, 21, 27)))
             .show(ctx, |ui| {
                 let full_rect = ui.max_rect();
@@ -164,10 +170,8 @@ impl DelayVstApp {
                     let shadow_rect = vst_rect.expand(i as f32 * 1.8);
                     painter.rect_stroke(
                         shadow_rect,
-                        // Updated to CornerRadius and u8
                         egui::CornerRadius::same(8 + i as u8),
                         egui::Stroke::new(1.0, egui::Color32::from_rgba_unmultiplied(0, 0, 0, (30 / i) as u8)),
-                        // Added StrokeKind for egui 0.31
                         egui::StrokeKind::Middle,
                     );
                 }
@@ -180,6 +184,7 @@ impl DelayVstApp {
                     egui::StrokeKind::Middle,
                 );
 
+                #[allow(deprecated)]
                 ui.allocate_ui_at_rect(vst_rect, |ui| {
                     ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
 
@@ -220,7 +225,6 @@ fn draw_top_panel(ui: &mut egui::Ui, rect: egui::Rect, _app: &DelayVstApp, time:
     let shift_x = (rect.width() - 380.0) / 2.0;
 
     let draw_glowing_line = |p: &egui::Painter, p1: egui::Pos2, p2: egui::Pos2, stroke: egui::Stroke| {
-        // Fixed: Added the missing [ ] brackets around p1 and p2
         p.line_segment([p1, p2], egui::Stroke::new(stroke.width + 3.0, egui::Color32::from_rgba_unmultiplied(44, 229, 196, 25)));
         p.line_segment([p1, p2], egui::Stroke::new(stroke.width + 1.5, egui::Color32::from_rgba_unmultiplied(44, 229, 196, 60)));
         p.line_segment([p1, p2], stroke);

@@ -19,7 +19,8 @@ jobs:
         targets: x86_64-pc-windows-msvc
 
     - name: Build VST3 Plugin
-      run: cargo xtask bundle delay-vst --release
+      # THIS IS THE LINE WE FIXED:
+      run: cargo run --package xtask -- bundle delay-vst --release
 
     - name: Upload VST3 for Download
       uses: actions/upload-artifact@v4

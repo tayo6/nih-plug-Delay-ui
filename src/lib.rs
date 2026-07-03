@@ -55,7 +55,8 @@ impl Plugin for DelayVst {
             self.params.editor_state.clone(),
             (),
             |_, _| {},
-            move |_, ctx, _setter, _window| {
+            // Updated for nih-plug's new 3-argument closure
+            move |_, ctx, _setter| {
                 app_state.update(ctx);
             },
         )
@@ -72,10 +73,11 @@ impl Plugin for DelayVst {
     }
 }
 
-impl nih_plug::nih_export_vst3!(DelayVst);
+// Fixed: Removed the accidental 'impl' keyword here
+nih_plug::nih_export_vst3!(DelayVst);
 
 // ==========================================================================
-// APP REPRESENTATION & IMPLEMENTATION (Your Code)
+// APP REPRESENTATION & IMPLEMENTATION
 // ==========================================================================
 
 struct DelayVstApp {
@@ -144,7 +146,8 @@ impl DelayVstApp {
         }
 
         egui::CentralPanel::default()
-            .frame(egui::Frame::none().fill(egui::Color32::from_rgb(18, 21, 27)))
+            // Updated to Frame::NONE for egui 0.31
+            .frame(egui::Frame::NONE.fill(egui::Color32::from_rgb(18, 21, 27)))
             .show(ctx, |ui| {
                 let full_rect = ui.max_rect();
                 let painter = ui.painter();
@@ -161,13 +164,21 @@ impl DelayVstApp {
                     let shadow_rect = vst_rect.expand(i as f32 * 1.8);
                     painter.rect_stroke(
                         shadow_rect,
-                        egui::Rounding::same(8.0 + i as f32),
+                        // Updated to CornerRadius and u8
+                        egui::CornerRadius::same(8 + i as u8),
                         egui::Stroke::new(1.0, egui::Color32::from_rgba_unmultiplied(0, 0, 0, (30 / i) as u8)),
+                        // Added StrokeKind for egui 0.31
+                        egui::StrokeKind::Middle,
                     );
                 }
 
-                painter.rect_filled(vst_rect, egui::Rounding::same(8.0), egui::Color32::from_rgb(245, 247, 250));
-                painter.rect_stroke(vst_rect, egui::Rounding::same(8.0), egui::Stroke::new(1.2, egui::Color32::from_rgb(187, 196, 204)));
+                painter.rect_filled(vst_rect, egui::CornerRadius::same(8), egui::Color32::from_rgb(245, 247, 250));
+                painter.rect_stroke(
+                    vst_rect, 
+                    egui::CornerRadius::same(8), 
+                    egui::Stroke::new(1.2, egui::Color32::from_rgb(187, 196, 204)),
+                    egui::StrokeKind::Middle,
+                );
 
                 ui.allocate_ui_at_rect(vst_rect, |ui| {
                     ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
@@ -188,7 +199,7 @@ fn draw_top_panel(ui: &mut egui::Ui, rect: egui::Rect, _app: &DelayVstApp, time:
     let painter = ui.painter();
     painter.rect_filled(
         rect,
-        egui::Rounding { nw: 8.0, ne: 8.0, sw: 0.0, se: 0.0 },
+        egui::CornerRadius { nw: 8, ne: 8, sw: 0, se: 0 },
         egui::Color32::from_rgb(9, 14, 18),
     );
 
@@ -209,9 +220,10 @@ fn draw_top_panel(ui: &mut egui::Ui, rect: egui::Rect, _app: &DelayVstApp, time:
     let shift_x = (rect.width() - 380.0) / 2.0;
 
     let draw_glowing_line = |p: &egui::Painter, p1: egui::Pos2, p2: egui::Pos2, stroke: egui::Stroke| {
-        p.line_segment(p1, p2, egui::Stroke::new(stroke.width + 3.0, egui::Color32::from_rgba_unmultiplied(44, 229, 196, 25)));
-        p.line_segment(p1, p2, egui::Stroke::new(stroke.width + 1.5, egui::Color32::from_rgba_unmultiplied(44, 229, 196, 60)));
-        p.line_segment(p1, p2, stroke);
+        // Fixed: Added the missing [ ] brackets around p1 and p2
+        p.line_segment([p1, p2], egui::Stroke::new(stroke.width + 3.0, egui::Color32::from_rgba_unmultiplied(44, 229, 196, 25)));
+        p.line_segment([p1, p2], egui::Stroke::new(stroke.width + 1.5, egui::Color32::from_rgba_unmultiplied(44, 229, 196, 60)));
+        p.line_segment([p1, p2], stroke);
     };
 
     let left_center = egui::vec2(150.0, 87.0);
@@ -308,7 +320,7 @@ fn draw_mid_bar(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp) {
 
     let painter = ui.painter();
 
-    painter.rect_filled(rect, egui::Rounding::ZERO, egui::Color32::from_rgb(241, 243, 246));
+    painter.rect_filled(rect, egui::CornerRadius::same(0), egui::Color32::from_rgb(241, 243, 246));
     painter.line_segment(
         [rect.left_bottom(), rect.right_bottom()],
         egui::Stroke::new(1.0, egui::Color32::from_rgb(225, 228, 232)),
@@ -327,7 +339,7 @@ fn draw_mid_bar(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp) {
 
     let switch_rect = egui::Rect::from_min_size(rect.left_top() + egui::vec2(74.0, 10.5), egui::vec2(32.0, 17.0));
     let switch_bg = if app.studio_mode { egui::Color32::from_rgb(142, 153, 252) } else { egui::Color32::from_rgb(203, 213, 224) };
-    painter.rect_filled(switch_rect, egui::Rounding::same(9.0), switch_bg);
+    painter.rect_filled(switch_rect, egui::CornerRadius::same(9), switch_bg);
 
     painter.line_segment(
         [switch_rect.left_top() + egui::vec2(2.0, 1.0), switch_rect.right_top() + egui::vec2(-2.0, 1.0)],
@@ -336,7 +348,7 @@ fn draw_mid_bar(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp) {
 
     let handle_x = if app.studio_mode { switch_rect.left() + 2.0 } else { switch_rect.left() + 17.0 };
     let handle_rect = egui::Rect::from_min_size(egui::pos2(handle_x, switch_rect.top() + 2.0), egui::vec2(13.0, 13.0));
-    painter.rect_filled(handle_rect, egui::Rounding::same(6.5), egui::Color32::WHITE);
+    painter.rect_filled(handle_rect, egui::CornerRadius::same(6), egui::Color32::WHITE);
 
     painter.text(
         rect.left_top() + egui::vec2(116.0, 19.0),
@@ -367,7 +379,7 @@ fn draw_mid_bar(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp) {
     } else {
         egui::Color32::from_rgb(160, 174, 192)
     };
-    painter.rect_filled(led_rect, egui::Rounding::same(2.0), led_color);
+    painter.rect_filled(led_rect, egui::CornerRadius::same(2), led_color);
 }
 
 fn draw_bottom_panel(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp, ctx: &egui::Context) {
@@ -465,7 +477,7 @@ fn draw_bottom_panel(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp,
 
     let painter = ui.painter();
 
-    painter.rect_filled(rect, egui::Rounding { nw: 0.0, ne: 0.0, sw: 8.0, se: 8.0 }, egui::Color32::from_rgb(247, 249, 250));
+    painter.rect_filled(rect, egui::CornerRadius { nw: 0, ne: 0, sw: 8, se: 8 }, egui::Color32::from_rgb(247, 249, 250));
     painter.line_segment(
         [egui::pos2(divider_x, rect.top()), egui::pos2(divider_x, rect.bottom())],
         egui::Stroke::new(1.0, egui::Color32::from_rgb(225, 228, 232)),
@@ -602,9 +614,14 @@ fn draw_bottom_panel(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp,
             egui::pos2(meter_cx, rect.top() + 55.0),
             egui::vec2(11.0, 86.5),
         );
-        p.rect_filled(meter_rect, egui::Rounding::same(2.0), egui::Color32::from_rgb(226, 232, 240));
+        p.rect_filled(meter_rect, egui::CornerRadius::same(2), egui::Color32::from_rgb(226, 232, 240));
 
-        p.rect_stroke(meter_rect, egui::Rounding::same(2.0), egui::Stroke::new(1.0, egui::Color32::from_rgba_unmultiplied(0, 0, 0, 30)));
+        p.rect_stroke(
+            meter_rect, 
+            egui::CornerRadius::same(2), 
+            egui::Stroke::new(1.0, egui::Color32::from_rgba_unmultiplied(0, 0, 0, 30)),
+            egui::StrokeKind::Middle,
+        );
 
         let lit_limit = (level * 24.0f32).round() as usize;
         let led_w = 7.0;
@@ -629,7 +646,7 @@ fn draw_bottom_panel(ui: &mut egui::Ui, rect: egui::Rect, app: &mut DelayVstApp,
             } else {
                 egui::Color32::from_rgb(203, 213, 220)
             };
-            p.rect_filled(led_rect, egui::Rounding::same(0.5), led_color);
+            p.rect_filled(led_rect, egui::CornerRadius::same(0), led_color);
         }
 
         p.text(
@@ -706,7 +723,13 @@ where
         egui::Stroke::NONE
     };
 
-    painter.rect(rect, egui::Rounding::same(6.0), bg_color, border_stroke);
+    painter.rect(
+        rect, 
+        egui::CornerRadius::same(6), 
+        bg_color, 
+        border_stroke,
+        egui::StrokeKind::Middle,
+    );
 
     let icon_center = egui::pos2(rect.center().x, rect.top() + 22.0);
     draw_icon(painter, icon_center);

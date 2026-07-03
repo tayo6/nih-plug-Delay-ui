@@ -10,5 +10,5 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-nih_plug = "0.30.0"
-nih_plug_egui = "0.30.0"
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }

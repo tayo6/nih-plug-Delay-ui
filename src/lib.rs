@@ -50,13 +50,11 @@ impl Plugin for DelayVst {
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        let mut app_state = DelayVstApp::default();
         create_egui_editor(
             self.params.editor_state.clone(),
-            (),
+            DelayVstApp::default(), // <-- Put the state here!
             |_, _| {},
-            // FIXED: The context is the first argument, not the second!
-            move |ctx, _setter, _state| {
+            |ctx, _setter, app_state| { // <-- It safely comes out here as a mutable reference!
                 app_state.update(ctx);
             },
         )
